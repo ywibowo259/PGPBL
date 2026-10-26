@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core'; // Instruksi 5: Tambahkan inject
+import { Component, OnInit, inject } from '@angular/core';
 import * as L from 'leaflet';
-import { DataService } from '../data.service'; // Instruksi 4: Tambahkan import DataService
+import { DataService } from '../data.service';
 
 @Component({
   selector: 'app-maps',
@@ -11,7 +11,7 @@ import { DataService } from '../data.service'; // Instruksi 4: Tambahkan import 
 export class MapsPage implements OnInit {
 
   map!: L.Map;
-  private dataService = inject(DataService); // Instruksi 6: Buat variabel dataService
+  private dataService = inject(DataService);
 
   constructor() { }
 
@@ -42,13 +42,13 @@ export class MapsPage implements OnInit {
         });
         L.Marker.prototype.options.icon = iconDefault;
 
-        // Jalankan fungsi loadPoints() setelah peta siap (Instruksi 8)
+        // Jalankan fungsi loadPoints() setelah peta siap
         this.loadPoints();
-      },);
+      });
     }
   }
 
-  // Instruksi 7: Buat function loadPoints() untuk memanggil dan menampilkan data points dari Firebase
+  // Buat function loadPoints() untuk memanggil dan menampilkan data points dari Firebase
   async loadPoints() {
     const points: any = await this.dataService.getPoints();
     for (const key in points) {
@@ -56,12 +56,47 @@ export class MapsPage implements OnInit {
         const point = points[key];
         const coordinates = point.coordinates.split(',').map((c: string) => parseFloat(c));
         const marker = L.marker(coordinates as L.LatLngExpression).addTo(this.map);
-        marker.bindPopup(`${point.name}`);
+
+        // Bind popup dengan tombol Delete yang menyertakan data-key
+        marker.bindPopup(`
+          <div>
+            <b>${point.name}</b><br>
+            <a href="/editpoint/${key}">Edit</a> |
+            <a href="#" class="delete-link" data-key="${key}">Delete</a>
+
+            </div>
+        `);
       }
     }
+
+    // Listener saat popup dibuka untuk menangkap event klik pada link delete
     this.map.on('popupopen', (e) => {
       const popup = e.popup;
+      const deleteLink = popup.getElement()?.querySelector('.delete-link');
+      if (deleteLink) {
+        deleteLink.addEventListener('click', (event) => {
+          event.preventDefault();
+          const key = (event.target as HTMLElement).dataset['key'];
+          if (key) {
+            this.deletePoint(key, popup.getLatLng());
+          }
+        });
+      }
     });
+  }
+
+  // Function deletePoint() untuk menghapus data di Firebase dan menghapus marker di peta
+  async deletePoint(key: string, latLng: L.LatLng | undefined) {
+    await this.dataService.deletePoint(key);
+    if (latLng) {
+      this.map.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          if (layer.getLatLng().equals(latLng)) {
+            this.map.removeLayer(layer);
+          }
+        }
+      });
+    }
   }
 
 }

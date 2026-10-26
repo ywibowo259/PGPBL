@@ -105,7 +105,7 @@ export class CreatepointPage implements OnInit {
           description: this.description
         };
         await this.dataService.savePoint(pointData);
-        this.navCtrl.navigateBack('/maps');
+        this.navCtrl.navigateBack('tabs/maps');
       } catch (error: any) {
         const alert = await this.alertCtrl.create({
           header: 'Save Failed',

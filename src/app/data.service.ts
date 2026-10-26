@@ -24,4 +24,30 @@ export class DataService {
       });
     });
   }
+
+  // Delete a point by its Firebase key
+  deletePoint(key: string) {
+    const pointRef = ref(database, `points/${key}`);
+    return remove(pointRef);
+  }
+
+
+  // Get a single point by its Firebase key
+  getPoint(key: string) {
+  const pointRef = ref(database, `points/${key}`);
+  return new Promise((resolve, reject) => {
+    get(pointRef).then((snapshot) => {
+      const data = snapshot.val();
+      resolve(data);
+    }).catch((error) => {
+      reject(error);
+    });
+  });
+}
+
+  updatePoint(key: string, point: { name: string, coordinates:
+  string, description: string }) {
+    const pointRef = ref(database, `points/${key}`);
+    return update(pointRef, point);
+  }
 }
